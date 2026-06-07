@@ -1,0 +1,804 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>10 000 — Compteur de points</title>
+<link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Nunito:wght@400;600;700;900&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #1a1a2e;
+    --card: #16213e;
+    --card2: #0f3460;
+    --accent: #e94560;
+    --gold: #f5a623;
+    --green: #4ecca3;
+    --text: #eaeaea;
+    --muted: #8899aa;
+    --radius: 16px;
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: 'Nunito', sans-serif;
+    min-height: 100vh;
+    padding: 20px;
+    background-image: radial-gradient(ellipse at 20% 20%, #0f346055 0%, transparent 60%),
+                      radial-gradient(ellipse at 80% 80%, #e9456022 0%, transparent 60%);
+  }
+
+  h1 {
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: clamp(2.5rem, 8vw, 4rem);
+    letter-spacing: 4px;
+    text-align: center;
+    color: var(--gold);
+    text-shadow: 0 0 30px #f5a62366;
+    margin-bottom: 6px;
+  }
+
+  .subtitle {
+    text-align: center;
+    color: var(--muted);
+    font-size: 0.85rem;
+    margin-bottom: 24px;
+    letter-spacing: 1px;
+  }
+
+  /* Setup */
+  #setup {
+    max-width: 480px;
+    margin: 0 auto;
+    background: var(--card);
+    border-radius: var(--radius);
+    padding: 28px;
+    border: 1px solid #ffffff11;
+  }
+
+  #setup h2 {
+    font-family: 'Bebas Neue', sans-serif;
+    letter-spacing: 2px;
+    font-size: 1.4rem;
+    color: var(--green);
+    margin-bottom: 20px;
+    text-align: center;
+  }
+
+  .player-row {
+    display: flex;
+    gap: 10px;
+    align-items: center;
+    margin-bottom: 12px;
+  }
+
+  .player-row input {
+    flex: 1;
+    background: var(--card2);
+    border: 1px solid #ffffff22;
+    border-radius: 10px;
+    padding: 10px 14px;
+    color: var(--text);
+    font-family: 'Nunito', sans-serif;
+    font-size: 1rem;
+    outline: none;
+    transition: border-color 0.2s;
+  }
+
+  .player-row input:focus { border-color: var(--green); }
+
+  .btn-remove {
+    background: none;
+    border: 1px solid var(--accent);
+    color: var(--accent);
+    border-radius: 8px;
+    width: 34px; height: 34px;
+    cursor: pointer;
+    font-size: 1.1rem;
+    transition: background 0.2s;
+    flex-shrink: 0;
+  }
+  .btn-remove:hover { background: var(--accent); color: white; }
+
+  .btn {
+    display: block;
+    width: 100%;
+    padding: 12px;
+    border: none;
+    border-radius: 10px;
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: 1.2rem;
+    letter-spacing: 2px;
+    cursor: pointer;
+    transition: transform 0.1s, box-shadow 0.2s;
+    margin-top: 10px;
+  }
+  .btn:active { transform: scale(0.97); }
+
+  .btn-secondary {
+    background: var(--card2);
+    color: var(--green);
+    border: 1px solid var(--green);
+  }
+  .btn-secondary:hover { background: var(--green); color: var(--bg); }
+
+  .btn-primary {
+    background: var(--accent);
+    color: white;
+    box-shadow: 0 4px 20px #e9456044;
+  }
+  .btn-primary:hover { box-shadow: 0 4px 30px #e9456077; }
+
+  /* Game */
+  #game { display: none; max-width: 900px; margin: 0 auto; }
+
+  .players-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+    gap: 16px;
+    margin-bottom: 24px;
+  }
+
+  .player-card {
+    background: var(--card);
+    border-radius: var(--radius);
+    padding: 18px;
+    border: 2px solid transparent;
+    transition: border-color 0.3s, transform 0.2s, box-shadow 0.3s;
+    position: relative;
+    overflow: hidden;
+  }
+
+  .player-card.active {
+    border-color: var(--gold);
+    box-shadow: 0 0 24px #f5a62333;
+    transform: translateY(-3px);
+  }
+
+  .player-card.not-entered {
+    opacity: 0.75;
+  }
+
+  .player-card.winner {
+    border-color: var(--gold);
+    background: linear-gradient(135deg, #16213e, #1a2a1e);
+    box-shadow: 0 0 40px #f5a62355;
+  }
+
+  .player-name {
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: 1.3rem;
+    letter-spacing: 2px;
+    color: var(--gold);
+    margin-bottom: 4px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+
+  .badge-active {
+    background: var(--gold);
+    color: var(--bg);
+    font-size: 0.55rem;
+    padding: 2px 6px;
+    border-radius: 4px;
+    letter-spacing: 1px;
+    font-family: 'Nunito', sans-serif;
+    font-weight: 900;
+  }
+
+  .badge-out {
+    background: var(--muted);
+    color: var(--bg);
+    font-size: 0.55rem;
+    padding: 2px 6px;
+    border-radius: 4px;
+    font-family: 'Nunito', sans-serif;
+    font-weight: 900;
+  }
+
+  .player-score {
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: 2.8rem;
+    line-height: 1;
+    color: var(--text);
+    margin-bottom: 2px;
+  }
+
+  .player-score.zero { color: var(--muted); }
+  .score-target { font-size: 0.75rem; color: var(--muted); margin-bottom: 12px; }
+
+  .progress-bar {
+    height: 5px;
+    background: #ffffff11;
+    border-radius: 99px;
+    overflow: hidden;
+    margin-bottom: 12px;
+  }
+  .progress-fill {
+    height: 100%;
+    border-radius: 99px;
+    background: linear-gradient(90deg, var(--green), var(--gold));
+    transition: width 0.5s ease;
+  }
+
+  /* Turn panel */
+  .turn-panel {
+    background: var(--card);
+    border-radius: var(--radius);
+    padding: 22px;
+    border: 1px solid #ffffff11;
+    margin-bottom: 20px;
+  }
+
+  .turn-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 18px;
+    flex-wrap: wrap;
+    gap: 10px;
+  }
+
+  .turn-title {
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: 1.3rem;
+    letter-spacing: 2px;
+    color: var(--green);
+  }
+
+  .turn-count {
+    font-size: 0.82rem;
+    color: var(--muted);
+  }
+
+  .dice-indicators {
+    display: flex;
+    gap: 6px;
+    margin-bottom: 14px;
+    justify-content: center;
+  }
+
+  .die-indicator {
+    width: 14px; height: 14px;
+    border-radius: 4px;
+    background: #ffffff22;
+    transition: background 0.3s;
+  }
+  .die-indicator.used { background: var(--accent); }
+  .die-indicator.remaining { background: var(--green); }
+
+  /* Score entry */
+  .score-entry {
+    display: flex;
+    flex-direction: column;
+    gap: 14px;
+  }
+
+  .combos-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(130px, 1fr));
+    gap: 8px;
+    margin-bottom: 8px;
+  }
+
+  .combo-btn {
+    background: var(--card2);
+    border: 1px solid #ffffff22;
+    border-radius: 10px;
+    padding: 8px 10px;
+    color: var(--text);
+    cursor: pointer;
+    font-family: 'Nunito', sans-serif;
+    font-size: 0.82rem;
+    font-weight: 700;
+    text-align: center;
+    transition: background 0.2s, border-color 0.2s, transform 0.1s;
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+  }
+  .combo-btn:hover { background: var(--card2); border-color: var(--green); transform: scale(1.03); }
+  .combo-btn:active { transform: scale(0.97); }
+  .combo-pts { font-family: 'Bebas Neue', sans-serif; font-size: 1.2rem; color: var(--gold); letter-spacing: 1px; }
+
+  .manual-row {
+    display: flex;
+    gap: 10px;
+    align-items: center;
+  }
+  .manual-row input {
+    flex: 1;
+    background: var(--card2);
+    border: 1px solid #ffffff22;
+    border-radius: 10px;
+    padding: 10px 14px;
+    color: var(--text);
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: 1.4rem;
+    letter-spacing: 2px;
+    outline: none;
+    text-align: center;
+    transition: border-color 0.2s;
+  }
+  .manual-row input:focus { border-color: var(--gold); }
+  .manual-row button {
+    background: var(--card2);
+    border: 1px solid var(--green);
+    color: var(--green);
+    border-radius: 10px;
+    padding: 10px 16px;
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: 1rem;
+    letter-spacing: 1px;
+    cursor: pointer;
+    transition: background 0.2s;
+    white-space: nowrap;
+  }
+  .manual-row button:hover { background: var(--green); color: var(--bg); }
+
+  .turn-total {
+    text-align: center;
+    background: var(--card2);
+    border-radius: 12px;
+    padding: 14px;
+    margin-top: 4px;
+  }
+  .turn-total-label { font-size: 0.78rem; color: var(--muted); letter-spacing: 1px; margin-bottom: 4px; }
+  .turn-total-val { font-family: 'Bebas Neue', sans-serif; font-size: 2.2rem; color: var(--gold); letter-spacing: 2px; }
+  .turn-total-val.enough { color: var(--green); }
+  .turn-total-val.warn { color: var(--accent); }
+
+  .action-row {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 10px;
+    margin-top: 4px;
+  }
+
+  .btn-farkle {
+    background: none;
+    border: 2px solid var(--accent);
+    color: var(--accent);
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: 1.1rem;
+    letter-spacing: 2px;
+    border-radius: 10px;
+    padding: 12px;
+    cursor: pointer;
+    transition: background 0.2s;
+  }
+  .btn-farkle:hover { background: var(--accent); color: white; }
+
+  .btn-validate {
+    background: var(--green);
+    color: var(--bg);
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: 1.1rem;
+    letter-spacing: 2px;
+    border-radius: 10px;
+    padding: 12px;
+    cursor: pointer;
+    border: none;
+    transition: opacity 0.2s, box-shadow 0.2s;
+    box-shadow: 0 4px 16px #4ecca344;
+  }
+  .btn-validate:disabled { opacity: 0.3; cursor: not-allowed; box-shadow: none; }
+  .btn-validate:not(:disabled):hover { box-shadow: 0 4px 24px #4ecca377; }
+
+  /* Log */
+  .log {
+    background: var(--card);
+    border-radius: var(--radius);
+    padding: 16px 20px;
+    border: 1px solid #ffffff11;
+    max-height: 200px;
+    overflow-y: auto;
+  }
+  .log h3 { font-family: 'Bebas Neue', sans-serif; letter-spacing: 2px; font-size: 1rem; color: var(--muted); margin-bottom: 10px; }
+  .log-entry {
+    font-size: 0.82rem;
+    color: var(--muted);
+    padding: 5px 0;
+    border-bottom: 1px solid #ffffff08;
+    display: flex;
+    justify-content: space-between;
+    gap: 10px;
+  }
+  .log-entry:last-child { border-bottom: none; }
+  .log-entry .log-name { color: var(--text); font-weight: 700; }
+  .log-entry .log-pts { font-family: 'Bebas Neue', sans-serif; font-size: 1rem; }
+  .log-entry .log-pts.positive { color: var(--green); }
+  .log-entry .log-pts.zero { color: var(--accent); }
+
+  /* Winner overlay */
+  #winner-overlay {
+    display: none;
+    position: fixed;
+    inset: 0;
+    background: #000000cc;
+    z-index: 100;
+    align-items: center;
+    justify-content: center;
+    flex-direction: column;
+    gap: 20px;
+  }
+  #winner-overlay.show { display: flex; }
+  .winner-box {
+    background: var(--card);
+    border-radius: 24px;
+    padding: 40px 50px;
+    text-align: center;
+    border: 2px solid var(--gold);
+    box-shadow: 0 0 60px #f5a62355;
+    animation: popIn 0.4s cubic-bezier(0.34,1.56,0.64,1);
+  }
+  @keyframes popIn {
+    from { transform: scale(0.7); opacity: 0; }
+    to { transform: scale(1); opacity: 1; }
+  }
+  .winner-box .trophy { font-size: 4rem; margin-bottom: 12px; }
+  .winner-box h2 { font-family: 'Bebas Neue', sans-serif; font-size: 2.5rem; letter-spacing: 3px; color: var(--gold); margin-bottom: 8px; }
+  .winner-box p { color: var(--muted); margin-bottom: 24px; font-size: 1rem; }
+  .winner-box .final-score { font-family: 'Bebas Neue', sans-serif; font-size: 3.5rem; color: var(--green); margin-bottom: 20px; }
+
+  .reset-btn {
+    background: var(--accent);
+    color: white;
+    border: none;
+    border-radius: 12px;
+    padding: 14px 32px;
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: 1.3rem;
+    letter-spacing: 2px;
+    cursor: pointer;
+    box-shadow: 0 4px 20px #e9456055;
+  }
+
+  .remove-last-btn {
+    background: none;
+    border: 1px solid #ffffff22;
+    color: var(--muted);
+    border-radius: 8px;
+    padding: 5px 10px;
+    font-size: 0.75rem;
+    cursor: pointer;
+    font-family: 'Nunito', sans-serif;
+    transition: color 0.2s, border-color 0.2s;
+  }
+  .remove-last-btn:hover { color: var(--accent); border-color: var(--accent); }
+
+  .throw-history {
+    display: flex;
+    gap: 6px;
+    flex-wrap: wrap;
+    margin-bottom: 4px;
+    min-height: 26px;
+  }
+  .throw-chip {
+    background: #ffffff11;
+    border-radius: 6px;
+    padding: 3px 10px;
+    font-size: 0.78rem;
+    color: var(--green);
+    font-weight: 700;
+    font-family: 'Bebas Neue', sans-serif;
+    letter-spacing: 1px;
+  }
+
+  .lancer-indicator {
+    display: flex;
+    gap: 6px;
+    align-items: center;
+    justify-content: center;
+    margin-bottom: 12px;
+  }
+  .lancer-dot {
+    width: 10px; height: 10px;
+    border-radius: 50%;
+    background: #ffffff22;
+    transition: background 0.3s;
+  }
+  .lancer-dot.done { background: var(--gold); }
+  .lancer-dot.current { background: var(--green); box-shadow: 0 0 8px var(--green); }
+
+  @media (max-width: 500px) {
+    .action-row { grid-template-columns: 1fr; }
+    .combos-grid { grid-template-columns: repeat(2, 1fr); }
+  }
+</style>
+</head>
+<body>
+
+<h1>🎲 10 000</h1>
+<p class="subtitle">5 dés · 3 Farkles consécutifs = perte du tour précédent · 500 pts pour entrer</p>
+
+<!-- SETUP -->
+<div id="setup">
+  <h2>⚙ Nouvelle Partie</h2>
+  <div id="players-list">
+    <div class="player-row"><input type="text" placeholder="Joueur 1" value="Joueur 1"><button class="btn-remove" onclick="removePlayer(this)">✕</button></div>
+    <div class="player-row"><input type="text" placeholder="Joueur 2" value="Joueur 2"><button class="btn-remove" onclick="removePlayer(this)">✕</button></div>
+  </div>
+  <button class="btn btn-secondary" onclick="addPlayer()">+ Ajouter un joueur</button>
+  <button class="btn btn-primary" onclick="startGame()" style="margin-top:16px">🎲 Commencer</button>
+</div>
+
+<!-- GAME -->
+<div id="game">
+  <div class="players-grid" id="players-grid"></div>
+
+  <div class="turn-panel">
+    <div class="turn-header">
+      <div>
+        <div class="turn-title" id="turn-title">Tour de —</div>
+        <div class="turn-count" id="turn-info"></div>
+      </div>
+      <div class="lancer-indicator" id="lancer-dots"></div>
+    </div>
+
+    <div class="throw-history" id="throw-history"></div>
+
+    <div class="score-entry">
+      <div class="combos-grid">
+        <button class="combo-btn" onclick="addPoints(100)"><span>🎯 Un 1</span><span class="combo-pts">+100</span></button>
+        <button class="combo-btn" onclick="addPoints(50)"><span>⭐ Un 5</span><span class="combo-pts">+50</span></button>
+        <button class="combo-btn" onclick="addPoints(1000)"><span>👑 Trois 1</span><span class="combo-pts">+1000</span></button>
+        <button class="combo-btn" onclick="addPoints(200)"><span>🎲 Trois 2</span><span class="combo-pts">+200</span></button>
+        <button class="combo-btn" onclick="addPoints(300)"><span>🎲 Trois 3</span><span class="combo-pts">+300</span></button>
+        <button class="combo-btn" onclick="addPoints(400)"><span>🎲 Trois 4</span><span class="combo-pts">+400</span></button>
+        <button class="combo-btn" onclick="addPoints(500)"><span>🎲 Trois 5</span><span class="combo-pts">+500</span></button>
+        <button class="combo-btn" onclick="addPoints(600)"><span>🎲 Trois 6</span><span class="combo-pts">+600</span></button>
+        <button class="combo-btn" onclick="addPoints(1000)"><span>🔢 Suite 1-5</span><span class="combo-pts">+1000</span></button>
+      </div>
+
+      <div class="manual-row">
+        <input type="number" id="manual-pts" placeholder="Autre pts..." min="0" step="50">
+        <button onclick="addManual()">Ajouter</button>
+      </div>
+
+      <div class="turn-total">
+        <div class="turn-total-label">TOTAL CE TOUR</div>
+        <div class="turn-total-val" id="turn-total-val">0</div>
+      </div>
+
+      <div style="display:flex;justify-content:flex-end">
+        <button class="remove-last-btn" onclick="removeLastThrow()">↩ Annuler dernier ajout</button>
+      </div>
+
+      <div class="action-row">
+        <button class="btn-farkle" onclick="farkle()">💀 Farkle (0 pt)</button>
+        <button class="btn-validate" id="btn-validate" onclick="validate()" disabled>✓ Valider le tour</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="log">
+    <h3>📋 Historique</h3>
+    <div id="log-entries"></div>
+  </div>
+
+  <button class="btn btn-secondary" style="max-width:200px;margin:16px auto 0;display:block" onclick="resetGame()">↺ Rejouer</button>
+</div>
+
+<!-- WINNER OVERLAY -->
+<div id="winner-overlay">
+  <div class="winner-box">
+    <div class="trophy">🏆</div>
+    <h2 id="winner-name">—</h2>
+    <div class="final-score" id="winner-score">0</div>
+    <p>a remporté la partie !</p>
+    <button class="reset-btn" onclick="resetGame()">↺ Nouvelle Partie</button>
+  </div>
+</div>
+
+<script>
+const TARGET = 10000;
+const ENTRY = 500;
+const MAX_CONSEC_FARKLES = 3;
+
+let players = [];
+let currentIdx = 0;
+let turnPoints = 0;
+let throwHistory = [];
+let gameOver = false;
+let log = [];
+
+function addPlayer() {
+  const list = document.getElementById('players-list');
+  const n = list.children.length + 1;
+  const row = document.createElement('div');
+  row.className = 'player-row';
+  row.innerHTML = `<input type="text" placeholder="Joueur ${n}" value="Joueur ${n}"><button class="btn-remove" onclick="removePlayer(this)">✕</button>`;
+  list.appendChild(row);
+}
+
+function removePlayer(btn) {
+  const list = document.getElementById('players-list');
+  if (list.children.length <= 2) return alert('Minimum 2 joueurs !');
+  btn.parentElement.remove();
+}
+
+function startGame() {
+  const inputs = document.querySelectorAll('#players-list input');
+  players = Array.from(inputs).map((inp, i) => ({
+    name: inp.value.trim() || `Joueur ${i+1}`,
+    score: 0,
+    entered: false,
+    consecFarkles: 0,  // farkles consécutifs
+    lastTurnScore: 0   // pts marqués au tour précédent
+  }));
+  if (players.length < 2) return alert('Minimum 2 joueurs !');
+  currentIdx = 0;
+  gameOver = false;
+  log = [];
+  document.getElementById('setup').style.display = 'none';
+  document.getElementById('game').style.display = 'block';
+  renderPlayers();
+  startTurn();
+}
+
+function renderPlayers() {
+  const grid = document.getElementById('players-grid');
+  grid.innerHTML = players.map((p, i) => {
+    const pct = Math.min(100, Math.round(p.score / TARGET * 100));
+    const isActive = i === currentIdx && !gameOver;
+    const isWinner = p.score >= TARGET;
+    const farkleWarning = p.consecFarkles > 0 ? `<span style="color:var(--accent);font-size:0.7rem;font-family:'Nunito',sans-serif;font-weight:700;">💀 ${p.consecFarkles}/${MAX_CONSEC_FARKLES} Farkle${p.consecFarkles > 1 ? 's' : ''}</span>` : '';
+    return `
+      <div class="player-card ${isActive ? 'active' : ''} ${!p.entered ? 'not-entered' : ''} ${isWinner ? 'winner' : ''}">
+        <div class="player-name">
+          ${p.name}
+          ${isActive ? '<span class="badge-active">EN JEU</span>' : ''}
+          ${!p.entered ? '<span class="badge-out">HORS JEU</span>' : ''}
+        </div>
+        <div class="player-score ${p.score === 0 ? 'zero' : ''}">${p.score.toLocaleString('fr-FR')}</div>
+        <div class="score-target">/ ${TARGET.toLocaleString('fr-FR')}</div>
+        <div class="progress-bar"><div class="progress-fill" style="width:${pct}%"></div></div>
+        ${farkleWarning}
+      </div>`;
+  }).join('');
+}
+
+function startTurn() {
+  turnPoints = 0;
+  throwHistory = [];
+  updateTurnUI();
+  document.getElementById('manual-pts').value = '';
+}
+
+function updateTurnUI() {
+  const p = players[currentIdx];
+  document.getElementById('turn-title').textContent = `Tour de ${p.name}`;
+
+  const farkleInfo = p.consecFarkles > 0
+    ? ` · ⚠️ ${p.consecFarkles} Farkle(s) consécutif(s)`
+    : '';
+  document.getElementById('turn-info').textContent =
+    `Score actuel : ${p.score.toLocaleString('fr-FR')} pts${farkleInfo}`;
+
+  // Farkle dots (show consecutive farkles)
+  const dots = document.getElementById('lancer-dots');
+  dots.innerHTML = Array.from({length: MAX_CONSEC_FARKLES}, (_, i) => {
+    let cls = i < p.consecFarkles ? 'done' : '';
+    return `<div class="lancer-dot ${cls}" title="Farkle ${i+1}"></div>`;
+  }).join('');
+
+  // Throw history chips
+  const hist = document.getElementById('throw-history');
+  hist.innerHTML = throwHistory.map(v => `<div class="throw-chip">+${v}</div>`).join('');
+
+  // Total
+  const totalEl = document.getElementById('turn-total-val');
+  totalEl.textContent = turnPoints.toLocaleString('fr-FR');
+  const notEntered = !p.entered;
+  if (notEntered) {
+    totalEl.className = 'turn-total-val ' + (turnPoints >= ENTRY ? 'enough' : 'warn');
+  } else {
+    totalEl.className = 'turn-total-val ' + (turnPoints > 0 ? 'enough' : '');
+  }
+
+  // Validate button
+  const canValidate = p.entered ? turnPoints > 0 : turnPoints >= ENTRY;
+  document.getElementById('btn-validate').disabled = !canValidate;
+
+  renderPlayers();
+}
+
+function addPoints(pts) {
+  turnPoints += pts;
+  throwHistory.push(pts);
+  updateTurnUI();
+}
+
+function addManual() {
+  const inp = document.getElementById('manual-pts');
+  const val = parseInt(inp.value);
+  if (!val || val <= 0) return;
+  addPoints(val);
+  inp.value = '';
+}
+
+function removeLastThrow() {
+  if (throwHistory.length === 0) return;
+  const last = throwHistory.pop();
+  turnPoints -= last;
+  updateTurnUI();
+}
+
+function farkle() {
+  const p = players[currentIdx];
+  p.consecFarkles++;
+
+  if (p.consecFarkles >= MAX_CONSEC_FARKLES) {
+    // 3 farkles consécutifs : on perd les pts du tour précédent
+    const lost = p.lastTurnScore;
+    p.score = Math.max(0, p.score - lost);
+    p.consecFarkles = 0;
+    p.lastTurnScore = 0;
+    addLog(p.name, -lost, `💀💀💀 3 Farkles ! -${lost} pts (tour précédent) → ${p.score.toLocaleString('fr-FR')} pts`);
+  } else {
+    addLog(p.name, 0, `💀 Farkle (${p.consecFarkles}/${MAX_CONSEC_FARKLES})`);
+  }
+
+  nextPlayer();
+}
+
+function validate() {
+  const p = players[currentIdx];
+  if (!p.entered && turnPoints < ENTRY) {
+    alert(`Il faut au moins ${ENTRY} pts pour entrer dans la partie !`);
+    return;
+  }
+  p.lastTurnScore = turnPoints;  // mémoriser pour éventuelle pénalité
+  p.score += turnPoints;
+  p.consecFarkles = 0;           // reset farkles consécutifs
+  if (!p.entered) p.entered = true;
+  addLog(p.name, turnPoints, `Total : ${p.score.toLocaleString('fr-FR')} pts`);
+
+  if (p.score >= TARGET) {
+    showWinner(p);
+    return;
+  }
+  nextPlayer();
+}
+
+function nextPlayer() {
+  currentIdx = (currentIdx + 1) % players.length;
+  startTurn();
+  updateTurnUI();
+}
+
+function addLog(name, pts, detail) {
+  log.unshift({ name, pts, detail });
+  const container = document.getElementById('log-entries');
+  container.innerHTML = log.slice(0, 30).map(e => `
+    <div class="log-entry">
+      <span><span class="log-name">${e.name}</span> — ${e.detail}</span>
+      <span class="log-pts ${e.pts > 0 ? 'positive' : e.pts < 0 ? 'zero' : ''}">${e.pts > 0 ? '+' : ''}${e.pts}</span>
+    </div>`).join('');
+}
+
+function showWinner(p) {
+  gameOver = true;
+  document.getElementById('winner-name').textContent = p.name;
+  document.getElementById('winner-score').textContent = p.score.toLocaleString('fr-FR') + ' pts';
+  document.getElementById('winner-overlay').classList.add('show');
+  renderPlayers();
+}
+
+function resetGame() {
+  document.getElementById('winner-overlay').classList.remove('show');
+  document.getElementById('game').style.display = 'none';
+  document.getElementById('setup').style.display = 'block';
+}
+
+// Enter key for manual input
+document.addEventListener('keydown', e => {
+  if (e.key === 'Enter' && document.activeElement.id === 'manual-pts') addManual();
+});
+</script>
+</body>
+</html>
