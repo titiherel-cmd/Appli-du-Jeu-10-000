@@ -1,7 +1,7 @@
 // ⬆️ Incrémente ce numéro à chaque déploiement pour forcer la mise à jour
-const CACHE_VERSION = 2;
+const CACHE_VERSION = 3;
 const CACHE = `10000-v${CACHE_VERSION}`;
-const ASSETS = ['/index.html', '/manifest.json'];
+const ASSETS = ['./index.html', './manifest.json', './icon-192.png', './icon-512.png'];
 
 // Installation : mise en cache des ressources statiques
 self.addEventListener('install', e => {
@@ -21,26 +21,23 @@ self.addEventListener('activate', e => {
   self.clients.claim(); // Prend le contrôle des onglets ouverts
 });
 
-// Fetch : stratégie Network First
-// → Essaie le réseau en priorité, sinon sert depuis le cache
+// Fetch : stratégie Cache First pour les assets, Network First sinon
 self.addEventListener('fetch', e => {
-  // On ignore les requêtes non-GET et les extensions Chrome
   if (e.request.method !== 'GET') return;
   if (e.request.url.startsWith('chrome-extension://')) return;
+  // Ignore les requêtes cross-origin (Google Fonts, etc.)
+  if (!e.request.url.startsWith(self.location.origin)) return;
 
   e.respondWith(
-    fetch(e.request)
-      .then(response => {
-        // Si la réponse réseau est valide, on met à jour le cache
+    caches.match(e.request).then(cached => {
+      const network = fetch(e.request).then(response => {
         if (response && response.status === 200) {
           const clone = response.clone();
           caches.open(CACHE).then(c => c.put(e.request, clone));
         }
         return response;
-      })
-      .catch(() => {
-        // Pas de réseau → on sert depuis le cache
-        return caches.match(e.request).then(r => r || caches.match('/index.html'));
-      })
+      });
+      return cached || network;
+    })
   );
 });
